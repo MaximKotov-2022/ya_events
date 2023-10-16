@@ -33,14 +33,14 @@ class GetData:
         html = page.read().decode("utf-8")
         soup = BeautifulSoup(html, "html.parser")
         events = soup.find(class_='events__container')
-
         return events
 
-    def date_converter(self, date: str) -> date:
+    def date_converter(date):
         '''Конвертер даты к виду гггг-мм-дд. Принмает: строку.'''
 
         date = date.split()
         flag_data_today_tomorrow = False
+
         if date[0] == 'сегодня':
             date[0] = str(datetime.date.today())
             flag_data_today_tomorrow = True
@@ -54,11 +54,11 @@ class GetData:
                 date_number = '0' + date_number
 
             try:
-                date_month = self.MONTHS[date[2].replace(',', '')]
+                date_month = GetData.MONTHS[date[2].replace(',', '')]
                 logging.info('date_month', date_month)
             except (KeyError, IndexError):
                 logging.warning('Перехвачена ошибка')
-                date_month = self.MONTHS[date[2].replace(',', '')]
+                date_month = GetData.MONTHS[date[2].replace(',', '')]
             date_year = str(datetime.date.today().year)
 
             return (
@@ -69,7 +69,7 @@ class GetData:
         else:
             return date[0]
 
-    @staticmethod
+
     def processing_data_website() -> list:
         """Обработка данных сайта после парсинга.
         Возвращает словарь (date, name, site). Сериализация.
@@ -81,10 +81,20 @@ class GetData:
         for event in events:
             logging.debug('Парсинг информации о каждом мероприятии')
             if len(event) != 0:
-                date_find_in_event = event.find(class_='event-card__date').text
+                date_find_in_event = event.find(class_='event-card__date')
                 if 'Дата уточняется' not in date_find_in_event:
-                    date = GetData.date_converter(date_find_in_event)
-                name = event.find(class_='event-card__title').text
+                    try:
+                        date = GetData.date_converter(
+                            date_find_in_event.text
+                        )
+                        logging.info('Дата мероприятия: {}'.format(date))
+                    except TypeError:
+                        logging.warning('Неверный формат даты: {}'.format(
+                            date_find_in_event.get_text()))
+                        date = None
+
+                name = event.find(class_='event-card__title')
+
                 if 'https' not in event.find('a').get('href'):
                     site = (
                         'https://events.yandex.ru'
@@ -103,7 +113,8 @@ class GetData:
 
         return data_events
 
-    def process_information_parsing(self) -> list:
+
+    def process_information_parsing() -> list:
         """Обработка информации после парсинга.
         Возвращает строчку с данными о событиях для БОТа."""
 
