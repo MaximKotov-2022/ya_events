@@ -1,7 +1,6 @@
 import datetime
 import locale
 import logging
-from datetime import date
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -35,8 +34,16 @@ class GetData:
         events = soup.find(class_='events__container')
         return events
 
-    def date_converter(date):
-        '''Конвертер даты к виду гггг-мм-дд. Принмает: строку.'''
+
+    def date_converter(date: str):
+        ''' Конвертер строки даты к виду гггг-мм-дд.
+
+        :param date: дата в виде строки ДН, дата месяц
+        :type date: str
+
+        :rtype: str
+        :return: Вид datetime ГГГГ-ММ-ДД
+        '''
 
         date = date.split()
         flag_data_today_tomorrow = False
@@ -70,11 +77,17 @@ class GetData:
             return date[0]
 
 
-    def processing_data_website() -> list:
+    def processing_data_website(self) -> list:
         """Обработка данных сайта после парсинга.
-        Возвращает словарь (date, name, site). Сериализация.
-        """
 
+        В методе выделяем отдлеьные данные (дату, название, сайт мероприятий),
+        а затем добавляем их в массив, который возвращаем для дальнейших
+        операций.
+
+        :rtype: list
+        :return: Возвращает список (массив) со словарями, имеющими ключи
+        date, name, site
+        """
         events = GetData.site_parsing()
         data_events = []
 
@@ -84,9 +97,7 @@ class GetData:
                 date_find_in_event = event.find(class_='event-card__date')
                 if 'Дата уточняется' not in date_find_in_event:
                     try:
-                        date = GetData.date_converter(
-                            date_find_in_event.text
-                        )
+                        date = GetData.date_converter(date_find_in_event.text)
                         logging.info('Дата мероприятия: {}'.format(date))
                     except TypeError:
                         logging.warning('Неверный формат даты: {}'.format(
@@ -114,9 +125,14 @@ class GetData:
         return data_events
 
 
-    def process_information_parsing() -> list:
+    def process_information_parsing(self) -> str:
         """Обработка информации после парсинга.
-        Возвращает строчку с данными о событиях для БОТа."""
+        Возвращает строчку с данными о событиях для бота.
+
+        :rtype: str
+        :return: строка в формате, подходящем для отображения в боте у
+        пользователей
+        """
 
         data = GetData.processing_data_website()
         text = []
