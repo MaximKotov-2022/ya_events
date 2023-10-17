@@ -1,8 +1,8 @@
 from django.http import HttpResponse
 
-from .get_data_parsing import GetData
+from .get_data_parsing import processing_data_website
 
 
 def index(request):
-    data = GetData.processing_data_website(None)
+    data = processing_data_website()
     return HttpResponse(f'Главная страница1111 {data}')
