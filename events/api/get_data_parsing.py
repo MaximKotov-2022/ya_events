@@ -5,7 +5,6 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-
 MONTHS_CHOICE = {
     'января': '01',
     'февраля': '02',
