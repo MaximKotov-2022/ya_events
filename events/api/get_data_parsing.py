@@ -1,6 +1,7 @@
 import datetime
 import locale
 import logging
+from typing import List
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -82,7 +83,7 @@ def date_converter(date: str):
 def processing_data_website() -> list:
     """Обработка данных сайта после парсинга.
 
-    В методе выделяем отдлеьные данные (дату, название, сайт мероприятий),
+    В методе выделяем отдельные данные (дату, название, сайт мероприятий),
     а затем добавляем их в массив, который возвращаем для дальнейших
     операций.
 
@@ -96,7 +97,7 @@ def processing_data_website() -> list:
     for event in events:
         logging.info('Парсинг информации о каждом мероприятии')
         if len(event) != 0:
-            # Получаем инфорацию о дате провдеения мероприятия.
+            # Получаем информацию о дате проведения мероприятия.
             date_find_in_event = event.find(class_='event-card__date')
             if 'Дата уточняется' not in date_find_in_event:
                 try:
@@ -109,7 +110,7 @@ def processing_data_website() -> list:
 
             name = event.find(class_='event-card__title')
 
-            # Создаём ссылку. Так как в некоторый мероприятиях указана полная
+            # Создаём ссылку. Так как в некоторых мероприятиях указана полная
             # ссылка на регистрацию, то мы делаем проверку для создания ссылки.
             if 'https' not in event.find('a').get('href'):
                 site = (
@@ -130,7 +131,7 @@ def processing_data_website() -> list:
     return data_events
 
 
-def process_information_parsing() -> str:
+def process_information_parsing() -> list[str]:
     """Обработка информации после парсинга.
     Возвращает строчку с данными о событиях для бота.
 
