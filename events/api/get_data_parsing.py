@@ -1,7 +1,6 @@
 import datetime
 import locale
 import logging
-from typing import List
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -20,6 +19,7 @@ MONTHS_CHOICE = {
     'ноября': '11',
     'декабря': '12'
 }
+
 
 def site_parsing() -> str:
     """Получение данных сайта (парсинг).
@@ -71,8 +71,7 @@ def date_converter(date: str):
             date_month = MONTHS_CHOICE[date[2].replace(',', '')]
         date_year = str(datetime.date.today().year)
 
-        return (
-            datetime.datetime.strptime(
+        return (datetime.datetime.strptime(
             date_year + '-' + date_month + '-' + date_number,
             "%Y-%m-%d").date()
         )
