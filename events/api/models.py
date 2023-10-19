@@ -5,9 +5,15 @@ User = get_user_model()
 
 
 class Event(models.Model):
-    date = models.DateField()
-    name = models.CharField(max_length=200)
-    site = models.URLField(max_length=254)
+    date = models.DateField(
+        verbose_name='Дата',
+    )
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=200,)
+    site = models.URLField(
+        verbose_name='Сайт',
+        max_length=254,)
 
     def __str__(self):
         return self.name
