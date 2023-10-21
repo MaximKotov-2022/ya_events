@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.getenv('SECRET_KEY', 'r*dfb@(q%r')
+DEBUG = os.getenv('DEBUG', '').lower() == 'true'
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1").split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,11 +74,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
+LANGUAGE_CODE = os.getenv('LANGUAGE_CODE', 'en-us')
+TIME_ZONE = os.getenv('TIME_ZONE', 'UTC')
+USE_I18N = os.getenv('USE_I18N', True)
+USE_L10N = os.getenv('USE_L10N', True)
+USE_TZ = os.getenv('USE_TZ', True)
 
 
 STATIC_URL = '/static/'
