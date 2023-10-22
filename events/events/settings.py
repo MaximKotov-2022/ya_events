@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'api.apps.ApiConfig',
+    'tg_bot.apps.TgBotConfig',
 ]
 
 MIDDLEWARE = [
