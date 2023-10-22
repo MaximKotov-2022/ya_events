@@ -1,5 +1,4 @@
 import datetime
-import locale
 import logging
 from urllib.request import urlopen
 
@@ -128,26 +127,3 @@ def processing_data_website() -> list:
             )
 
     return data_events
-
-
-def process_information_parsing() -> list[str]:
-    """Обработка информации после парсинга.
-    Возвращает строчку с данными о событиях для бота.
-
-    :rtype: str
-    :return: строка в формате, подходящем для отображения в боте у
-    пользователей
-    """
-
-    data = processing_data_website()
-    text = []
-    locale.setlocale(locale.LC_ALL, '')
-    for event in data:
-        date = (
-            datetime.datetime.strptime(event['date'], "%Y-%m-%d")
-        ).strftime("%a, %d %B")
-        name = event['name']
-        site = event['site']
-        text.append(f'Дата: {date}\nНазвание: {name}\nСайт: {site}\n\n\n')
-
-    return text
