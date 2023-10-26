@@ -1,5 +1,6 @@
 import datetime
 import locale
+import logging
 import os
 import time
 
@@ -15,9 +16,16 @@ from tg_bot.models import Profile, Subscription
 
 load_dotenv()
 
+# logging.basicConfig(
+#     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
+#     level=logging.INFO,
+#     filename='bot.log',
+#     filemode='w',
+#     encoding='utf-8',
+# )
+
 TOKEN = os.getenv('TOKEN')
-# RETRY_PERIOD = 1800
-RETRY_PERIOD = 2
+RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 1800))
 
 
 def process_information_parsing() -> str:
@@ -105,9 +113,12 @@ def all_events(update: Update, context: CallbackContext):
             'subscription': False
         }
     )
-    update.message.reply_text(process_information_parsing())
+    data = process_information_parsing()
+    send_message(chat_id,
+                 context,
+                 data)
 
-    return 0
+    return data
 
 
 def checking_data_changes() -> bool:
@@ -125,9 +136,8 @@ def checking_data_changes() -> bool:
         old_data = process_information_parsing()
         time.sleep(RETRY_PERIOD)  # Интервал проверки обновлений на сайте
         new_data = process_information_parsing()
-
+        logging.debug(f'Равны ли старые и новые данные:{old_data == new_data}')
         if old_data != new_data:
-            old_data = new_data
             return True
         return False
 
@@ -187,6 +197,7 @@ def subscribe(update: Update, context: CallbackContext):
         subscription.subscription = True
         subscription.save()
         update.message.reply_text('Вы успешно подписались на обновления')
+    check_updates(update, context)
 
     return 0
 
@@ -220,6 +231,25 @@ def unsubscribe(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('Вы не подписаны на обновления')
 
+    return 0
+
+
+def check_updates(update: Update, context: CallbackContext):
+    """
+    Функция постоянно проверяет наличие изменений в данных и отправляет
+    сообщения подписанным пользователям.
+
+    :param update: Объект обновления.
+    :param context: Контекст обратного вызова.
+    :return: Возвращает 0.
+    :rtype: Int
+    """
+    while True:
+        if checking_data_changes():
+            subscriptions = Subscription.objects.filter(subscription=True)
+            for subscription in subscriptions:
+                chat_id = subscription.profile.external_id
+                send_message(chat_id, context, process_information_parsing())
     return 0
 
 
@@ -270,6 +300,7 @@ class Command(BaseCommand):
         request = Request(
             connect_timeout=0.5,
             read_timeout=1.0,
+
         )
         bot = Bot(
             request=request,
@@ -282,7 +313,7 @@ class Command(BaseCommand):
             use_context=True,
 
         )
-        updater = Updater(token=TOKEN)
+        # updater = Updater(token=TOKEN)
 
         # Обработки команд
         updater.dispatcher.add_handler(CommandHandler(
