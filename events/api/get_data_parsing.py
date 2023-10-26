@@ -4,6 +4,16 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
+
+# logging.basicConfig(
+#     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
+#     level=logging.INFO,
+#     filename='get_data_parsing.log',
+#     filemode='w',
+#     encoding='utf-8',
+# )
+
+
 MONTHS_CHOICE = {
     'января': '01',
     'февраля': '02',
@@ -64,9 +74,9 @@ def date_converter(date: str):
 
         try:
             date_month = MONTHS_CHOICE[date[2].replace(',', '')]
-            logging.info('date_month', date_month)
-        except (KeyError, IndexError):
-            logging.warning('Перехвачена ошибка')
+            logging.debug('date_month', date_month)
+        except Exception as error:
+            logging.error(error)
             date_month = MONTHS_CHOICE[date[2].replace(',', '')]
         date_year = str(datetime.date.today().year)
 
