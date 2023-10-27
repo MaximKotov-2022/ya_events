@@ -4,7 +4,6 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-
 # logging.basicConfig(
 #     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
 #     level=logging.INFO,
