@@ -22,7 +22,7 @@ class Subscription(models.Model):
     profile = models.ForeignKey(
         to='tg_bot.Profile',
         verbose_name='Профиль',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
     )
     subscription = models.BooleanField(
         verbose_name='Подписка',
