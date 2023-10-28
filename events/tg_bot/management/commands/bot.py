@@ -25,7 +25,7 @@ load_dotenv()
 # )
 
 TOKEN = os.getenv('TOKEN')
-RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 1800))
+RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 2))
 
 
 def process_information_parsing() -> str:
@@ -298,8 +298,6 @@ def check_updates(update: Update, context: CallbackContext):
 
     :param update: Объект обновления.
     :param context: Контекст обратного вызова.
-    :return: Возвращает 0.
-    :rtype: Int
     """
     while True:
         if checking_data_changes():
@@ -307,7 +305,6 @@ def check_updates(update: Update, context: CallbackContext):
             for subscription in subscriptions:
                 chat_id = subscription.profile.external_id
                 send_message(chat_id, context, process_information_parsing())
-    return 0
 
 
 def do_echo(update: Update, context: CallbackContext):
@@ -356,10 +353,9 @@ class Command(BaseCommand):
 
         # Подключение
         request = Request(
-            # con_pool_size=10,
-            connect_timeout=0.5,
-            read_timeout=1.0,
-
+            # con_pool_size=1,
+            connect_timeout=5.0,
+            read_timeout=5.0,
         )
         bot = Bot(
             request=request,
@@ -367,12 +363,12 @@ class Command(BaseCommand):
         )
 
         # Обработчики
-        updater = Updater(
-            bot=bot,
-            use_context=True,
-
-        )
-        # updater = Updater(token=TOKEN)
+        # updater = Updater(
+        #     bot=bot,
+        #     use_context=True,
+        #
+        # )
+        updater = Updater(token=TOKEN)
 
         # Обработки команд
         updater.dispatcher.add_handler(CommandHandler(
