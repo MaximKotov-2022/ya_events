@@ -7,10 +7,9 @@ import time
 import requests
 from django.core.management.base import BaseCommand
 from dotenv import load_dotenv
-from telegram import Bot, ParseMode, ReplyKeyboardMarkup, Update
+from telegram import ParseMode, ReplyKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CommandHandler, Filters,
                           MessageHandler, Updater)
-from telegram.utils.request import Request
 
 from tg_bot.models import Profile, Subscription
 
@@ -25,7 +24,7 @@ load_dotenv()
 # )
 
 TOKEN = os.getenv('TOKEN')
-RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 2))
+RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 1800))
 
 
 def process_information_parsing() -> str:
@@ -37,12 +36,19 @@ def process_information_parsing() -> str:
     пользователей
     """
 
-    response = requests.get('http://127.0.0.1:8000/api/v1/events/')
-    if response.status_code == 200:
-        data = requests.get(url='http://127.0.0.1:8000/api/v1/events/').json()
-
     text = []
     locale.setlocale(locale.LC_ALL, '')
+
+    try:
+        response = requests.get('http://127.0.0.1:8000/api/v1/events/')
+        if response.status_code == 200:
+            data = response.json()
+    except Exception as e:
+        logging.error(f'Ошибка при анализе JSON: {e}')
+        data = []
+
+    if not data:
+        return ''
 
     for event in data:
         date = datetime.datetime.strptime(
@@ -103,27 +109,8 @@ def all_events(update: Update, context: CallbackContext):
     """
 
     chat_id = update.message.chat_id
+    update_subscription_add_user(update, context, False, False)
 
-    # Subscription.objects.get_or_create(
-    #     profile__external_id=chat_id,
-    #     defaults={
-    #         'profile': Profile.objects.get_or_create(
-    #             external_id=update.message.chat_id,
-    #             name=update.effective_user.username)[0],
-    #         'subscription': False
-    #     }
-    # )
-    # update_subscription(update, context, False, False)
-
-    Subscription.objects.get_or_create(
-        profile__external_id=chat_id,
-        defaults={
-            'profile': Profile.objects.get_or_create(
-                external_id=update.message.chat_id,
-                name=update.effective_user.username)[0],
-            'subscription': False
-        }
-    )
     data = process_information_parsing()
     send_message(chat_id,
                  context,
@@ -142,7 +129,6 @@ def checking_data_changes() -> bool:
     :return: Логическое значение, указывающее, есть ли какие-либо обновления
     :rtype: bool
     """
-
     while True:
         old_data = process_information_parsing()
         time.sleep(RETRY_PERIOD)  # Интервал проверки обновлений на сайте
@@ -180,48 +166,51 @@ def hi_say_first_message(update: Update, context: CallbackContext):
                         text=text,)
 
 
-# def update_subscription(update: Update, context: CallbackContext,
-#                         subscription_value: bool = False,
-#                         new_text: bool = False):
-#     """
-#     Обновление подписки пользователя на получение обновлений.
-#
-#     :param new_text: Флаг, нужно ли писать текст о подписке или нет.
-#     :param update: Объект обновления.
-#     :param context: Контекст обратного вызова.
-#     :param subscription_value: Значение подписки(True - подписаться,
-#     False - отписаться).
-#     :return: Возвращает 0 в случае успешной отправки сообщения.
-#     :rtype: Int
-#     """
-#     chat_id = update.effective_chat.id
-#
-#     subscription, created = Subscription.objects.get_or_create(
-#         profile__external_id=chat_id,
-#         defaults={
-#             'profile': Profile.objects.get_or_create(
-#                 external_id=update.message.chat_id,
-#                 name=update.effective_user.username)[0],
-#             'subscription': subscription_value
-#         }
-#     )
-#     if new_text:
-#         if subscription.subscription == subscription_value:
-#             if subscription_value:
-#                 update.message.reply_text('Вы уже подписаны на обновления')
-#             else:
-#                 update.message.reply_text('Вы не подписаны на обновления')
-#         else:
-#             subscription.subscription = subscription_value
-#             subscription.save()
-#             if subscription_value:
-#                 update.message.reply_text('Вы успешно подписались на обновления')
-#             else:
-#                 update.message.reply_text('Вы отписались от обновлений')
-#
-#         check_updates(update, context)
-#
-#     return 0
+def update_subscription_add_user(update: Update, context: CallbackContext,
+                                 subscription_value: bool = False,
+                                 text_un_subscribe_status: bool = False):
+    """
+    Обновление подписки пользователя на получение обновлений.
+
+    :param update: Объект обновления.
+    :param context: Контекст обратного вызова.
+    :param subscription_value: Значение подписки(True - подписаться,
+    False - отписаться).
+    :param text_un_subscribe_status: Флаг, нужно ли писать текст о подписке
+    или нет.
+    :return: Возвращает 0 в случае успешной отправки сообщения.
+    :rtype: Int
+    """
+
+    chat_id = update.effective_chat.id
+
+    subscription, created = Subscription.objects.get_or_create(
+        profile__external_id=chat_id,
+        defaults={
+            'profile': Profile.objects.get_or_create(
+                external_id=update.message.chat_id,
+                name=update.effective_user.username)[0],
+            'subscription': subscription_value
+        }
+    )
+    if text_un_subscribe_status:
+        if subscription.subscription == subscription_value:
+            if subscription_value:
+                update.message.reply_text('Вы уже подписаны на обновления')
+            else:
+                update.message.reply_text('Вы не подписаны на обновления')
+        else:
+            subscription.subscription = subscription_value
+            subscription.save()
+            if subscription_value:
+                update.message.reply_text(
+                    'Вы успешно подписались на обновления')
+            else:
+                update.message.reply_text('Вы отписались от обновлений')
+
+        check_updates(update, context)
+
+    return 0
 
 
 def subscribe(update: Update, context: CallbackContext):
@@ -233,29 +222,7 @@ def subscribe(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: Int
     """
-    # return update_subscription(update, context, True, True)
-    chat_id = update.effective_chat.id
-
-    subscription, created = Subscription.objects.get_or_create(
-        profile__external_id=chat_id,
-        defaults={
-            'profile': Profile.objects.get_or_create(
-                external_id=update.message.chat_id,
-                name=update.effective_user.username)[0],
-            'subscription': True
-        }
-    )
-
-    if subscription.subscription:
-        update.message.reply_text('Вы уже подписаны на обновления')
-    else:
-        # Если подписка уже есть, то обновляем значение поля subscription в БД
-        subscription.subscription = True
-        subscription.save()
-        update.message.reply_text('Вы успешно подписались на обновления')
-    check_updates(update, context)
-
-    return 0
+    return update_subscription_add_user(update, context, True, True)
 
 
 def unsubscribe(update: Update, context: CallbackContext):
@@ -267,28 +234,7 @@ def unsubscribe(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: Int
     """
-    # return update_subscription(update, context, False, True)
-    chat_id = update.effective_chat.id
-
-    subscription, created = Subscription.objects.get_or_create(
-        profile__external_id=chat_id,
-        defaults={
-            'profile': Profile.objects.get_or_create(
-                external_id=update.message.chat_id,
-                name=update.effective_user.username)[0],
-            'subscription': False
-        }
-    )
-
-    if subscription.subscription:
-        # Если подписка уже есть, то обновляем значение поля subscription в БД
-        subscription.subscription = False
-        subscription.save()
-        update.message.reply_text('Вы отписались от обновлений')
-    else:
-        update.message.reply_text('Вы не подписаны на обновления')
-
-    return 0
+    return update_subscription_add_user(update, context, False, True)
 
 
 def check_updates(update: Update, context: CallbackContext):
@@ -317,18 +263,7 @@ def do_echo(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: int
     """
-    chat_id = update.message.chat_id
-
-    Subscription.objects.get_or_create(
-        profile__external_id=chat_id,
-        defaults={
-            'profile': Profile.objects.get_or_create(
-                external_id=update.message.chat_id,
-                name=update.effective_user.username)[0],
-            'subscription': False
-        }
-    )
-    # update_subscription(update, context, False, False)
+    update_subscription_add_user(update, context, False, False)
 
     update.message.reply_text(text='Неизвестная команда')
 
@@ -350,24 +285,7 @@ class Command(BaseCommand):
         :type kwargs: Any
         :return: None
         """
-
-        # Подключение
-        request = Request(
-            # con_pool_size=1,
-            connect_timeout=5.0,
-            read_timeout=5.0,
-        )
-        bot = Bot(
-            request=request,
-            token=TOKEN,
-        )
-
         # Обработчики
-        # updater = Updater(
-        #     bot=bot,
-        #     use_context=True,
-        #
-        # )
         updater = Updater(token=TOKEN)
 
         # Обработки команд
