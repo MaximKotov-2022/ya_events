@@ -1,13 +1,20 @@
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.viewsets import ModelViewSet
 
 from .get_data_parsing import processing_data_website
 from .models import Event
+from .permissions import AdminOnly, ReadOnly
 from .serializers import EventSerializer
 
 
 class EventViewSet(ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [ReadOnly()]
+        return [AdminOnly()]
 
     # Получаем данные после парсинга и добавляем (или обновляем) данных в БД.
     data = processing_data_website()
@@ -42,6 +49,7 @@ class EventViewSet(ModelViewSet):
     def list(self, request):
         self.delete_missing_events()
         return super().list(request)
+
 
     def create(self, request):
         self.delete_missing_events()

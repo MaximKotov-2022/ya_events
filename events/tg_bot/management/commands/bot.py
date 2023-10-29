@@ -25,6 +25,11 @@ load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 1800))
+AUTH_JWT_TOKEN_ACCESS = os.getenv('AUTH_JWT_TOKEN_ACCESS')
+headers = {
+        'Authorization': f'Bearer { AUTH_JWT_TOKEN_ACCESS }',
+        'Content-Type': 'application/json',
+    }
 
 
 def process_information_parsing() -> str:
@@ -40,7 +45,9 @@ def process_information_parsing() -> str:
     locale.setlocale(locale.LC_ALL, '')
 
     try:
-        response = requests.get('http://127.0.0.1:8000/api/v1/events/')
+        response = requests.get('http://127.0.0.1:8000/api/v1/events/',
+                                headers=headers,
+                                )
         if response.status_code == 200:
             data = response.json()
     except Exception as e:
