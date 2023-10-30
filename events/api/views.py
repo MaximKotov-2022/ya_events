@@ -50,7 +50,6 @@ class EventViewSet(ModelViewSet):
         self.delete_missing_events()
         return super().list(request)
 
-
     def create(self, request):
         self.delete_missing_events()
         return super().create(request)
