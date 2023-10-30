@@ -4,13 +4,13 @@ from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 
-# logging.basicConfig(
-#     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
-#     level=logging.INFO,
-#     filename='get_data_parsing.log',
-#     filemode='w',
-#     encoding='utf-8',
-# )
+logging.basicConfig(
+    format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
+    level=logging.INFO,
+    filename='get_data_parsing.log',
+    filemode='w',
+    encoding='utf-8',
+)
 
 
 MONTHS_CHOICE = {
@@ -37,9 +37,12 @@ def site_parsing() -> str:
     """
     url = "https://events.yandex.ru/"
     page = urlopen(url)
+    logging.info("URL успешно открыт")
     html = page.read().decode("utf-8")
+    logging.info("HTML контент считался и декодировался")
     soup = BeautifulSoup(html, "html.parser")
     events = soup.find(class_='events__container')
+    logging.info('Данные сайта успешно получены')
     return events
 
 
@@ -73,7 +76,7 @@ def date_converter(date: str):
 
         try:
             date_month = MONTHS_CHOICE[date[2].replace(',', '')]
-            logging.debug('date_month', date_month)
+            logging.debug('Месяц найден в MONTHS_CHOICE')
         except Exception as error:
             logging.error(error)
             date_month = MONTHS_CHOICE[date[2].replace(',', '')]
@@ -101,8 +104,8 @@ def processing_data_website() -> list:
     events = site_parsing()
     data_events = []
 
+    logging.info('Парсинг информации о каждом мероприятии запущен')
     for event in events:
-        logging.info('Парсинг информации о каждом мероприятии')
         if len(event) != 0:
             # Получаем информацию о дате проведения мероприятия.
             date_find_in_event = event.find(class_='event-card__date')
@@ -134,5 +137,6 @@ def processing_data_website() -> list:
                     "site": site,
                 }
             )
-
+            logging.info(f'Добавлено мероприятие: { date }')
+    logging.info('Парсинг информации о каждом мероприятии завершён')
     return data_events

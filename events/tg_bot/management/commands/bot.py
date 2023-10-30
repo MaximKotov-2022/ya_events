@@ -15,13 +15,13 @@ from tg_bot.models import Profile, Subscription
 
 load_dotenv()
 
-# logging.basicConfig(
-#     format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
-#     level=logging.INFO,
-#     filename='bot.log',
-#     filemode='w',
-#     encoding='utf-8',
-# )
+logging.basicConfig(
+    format='%(asctime)s, %(levelname)s, %(name)s, %(message)s',
+    level=logging.WARNING,
+    filename='bot.log',
+    filemode='w',
+    encoding='utf-8',
+)
 
 TOKEN = os.getenv('TOKEN')
 RETRY_PERIOD = int(os.getenv('RETRY_PERIOD', 1800))
@@ -40,6 +40,7 @@ def process_information_parsing() -> str:
     :return: строка в формате, подходящем для отображения в боте у
     пользователей
     """
+    logging.info('Запуск парсинга')
 
     text = []
     locale.setlocale(locale.LC_ALL, '')
@@ -49,6 +50,7 @@ def process_information_parsing() -> str:
                                 headers=headers,
                                 )
         if response.status_code == 200:
+            logging.info('Данные успешно получены')
             data = response.json()
     except Exception as e:
         logging.error(f'Ошибка при анализе JSON: {e}')
@@ -63,6 +65,8 @@ def process_information_parsing() -> str:
         name = event['name']
         site = event['site']
         text.append(f'Дата: {date}\nНазвание: {name}\nСайт: {site}\n\n\n')
+
+    logging.info('Завершение парсинга')
 
     return ''.join(text)
 
@@ -84,6 +88,7 @@ def send_message(chat_id, context, text):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: int
     """
+    logging.info(f'Отправка сообщения в чат {chat_id}')
 
     buttons = ReplyKeyboardMarkup([
         ['Все мероприятия'],
@@ -114,15 +119,17 @@ def all_events(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: int
     """
-
     chat_id = update.message.chat_id
+
+    logging.info(f'Запуск функции all_events для { chat_id }')
+
     update_subscription_add_user(update, context, False, False)
 
     data = process_information_parsing()
     send_message(chat_id,
                  context,
                  data)
-
+    logging.info(f'Завершение функции all_events для { chat_id }')
     return data
 
 
@@ -142,6 +149,7 @@ def checking_data_changes() -> bool:
         new_data = process_information_parsing()
         logging.debug(f'Равны ли старые и новые данные:{old_data == new_data}')
         if old_data != new_data:
+            logging.info("Данные в БД были обновлены")
             return True
         return False
 
@@ -167,7 +175,7 @@ def hi_say_first_message(update: Update, context: CallbackContext):
 
             "<u>Отписаться</u> - отписаться от уведомлений."
             )
-
+    logging.info(f"Первое сообщение отправлено в чат {chat_id}")
     return send_message(chat_id,
                         context,
                         text=text,)
@@ -200,6 +208,11 @@ def update_subscription_add_user(update: Update, context: CallbackContext,
             'subscription': subscription_value
         }
     )
+
+    logging.info(
+        f"Значение подписки для chat_id {chat_id}:"
+        f"{subscription.subscription}")
+
     if text_un_subscribe_status:
         if subscription.subscription == subscription_value:
             if subscription_value:
@@ -229,6 +242,7 @@ def subscribe(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: Int
     """
+    logging.info(f'Пользователь { update.effective_chat.id } подписался')
     return update_subscription_add_user(update, context, True, True)
 
 
@@ -241,6 +255,7 @@ def unsubscribe(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: Int
     """
+    logging.info(f'Пользователь { update.effective_chat.id } отписался')
     return update_subscription_add_user(update, context, False, True)
 
 
@@ -252,11 +267,14 @@ def check_updates(update: Update, context: CallbackContext):
     :param update: Объект обновления.
     :param context: Контекст обратного вызова.
     """
+    logging.info(f'Запуск функции check_updates для '
+                 f'{ update.effective_chat.id }')
     while True:
         if checking_data_changes():
             subscriptions = Subscription.objects.filter(subscription=True)
             for subscription in subscriptions:
                 chat_id = subscription.profile.external_id
+                logging.info(f'Отправка сообщения пользователю { chat_id }')
                 send_message(chat_id, context, process_information_parsing())
 
 
@@ -270,6 +288,7 @@ def do_echo(update: Update, context: CallbackContext):
     :return: Возвращает 0 в случае успешной отправки сообщения.
     :rtype: int
     """
+    logging.info(f'Запуск функции do_echo для { update.effective_chat.id }')
     update_subscription_add_user(update, context, False, False)
 
     update.message.reply_text(text='Неизвестная команда')
@@ -302,6 +321,7 @@ class Command(BaseCommand):
             run_async=True,
         )
         )
+
         updater.dispatcher.add_handler(MessageHandler(
             Filters.text('Все мероприятия'),
             all_events,
