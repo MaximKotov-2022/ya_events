@@ -46,7 +46,9 @@ def process_information_parsing() -> str:
     locale.setlocale(locale.LC_ALL, '')
 
     try:
-        response = requests.get('http://127.0.0.1:8000/api/v1/events/', headers=headers,)
+        response = requests.get('http://127.0.0.1:8000/api/v1/events/',
+                                headers=headers,
+                                )
         if response.status_code == 200:
             logging.info('Данные успешно получены')
             data = response.json()
