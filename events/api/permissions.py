@@ -18,5 +18,5 @@ class AdminOnly(BasePermission):
     удаление).
     """
     def has_permission(self, request, view):
-        return (request.user.is_authenticated and
-                IsAdminUser().has_permission(request, view))
+        return (request.user.is_authenticated
+                and IsAdminUser().has_permission(request, view))
