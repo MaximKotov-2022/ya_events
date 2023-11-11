@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from telegram import ParseMode, ReplyKeyboardMarkup, Update
 from telegram.ext import (CallbackContext, CommandHandler, Filters,
                           MessageHandler, Updater)
+
 from tg_bot.models import Profile, Subscription
 
 load_dotenv()

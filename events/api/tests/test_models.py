@@ -1,5 +1,6 @@
-from api.models import Event
 from django.test import TestCase
+
+from api.models import Event
 
 
 class EventModelTest(TestCase):
