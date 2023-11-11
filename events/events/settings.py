@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'djoser',
     'api.apps.ApiConfig',
     'tg_bot.apps.TgBotConfig',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
