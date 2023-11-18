@@ -1,0 +1,6 @@
+venv
+.git
+events/db.sqlite3
+.idea
+.vscode
+.env
