@@ -11,7 +11,6 @@ from .models import Event
 from .permissions import AdminOnly, ReadOnly
 from .serializers import EventSerializer
 
-
 load_dotenv()
 
 
