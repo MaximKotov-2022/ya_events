@@ -50,19 +50,19 @@ def process_information_parsing() -> str:
                                 )
         if response.status_code == 200:
             logging.info('Данные успешно получены')
-            data = response.json()
+            data_from_the_website = response.json()
     except Exception as e:
         logging.error(f'Ошибка при анализе JSON: {e}')
-        data = []
+        data_from_the_website = []
 
-    if not data:
+    if not data_from_the_website:
         return ''
 
-    for event in data:
+    for event_data in data_from_the_website:
         date = datetime.datetime.strptime(
-            event['date'], "%Y-%m-%d").date()
-        name = event['name']
-        site = event['site']
+            event_data['date'], "%Y-%m-%d").date()
+        name = event_data['name']
+        site = event_data['site']
         text.append(f'Дата: {date}\nНазвание: {name}\nСайт: {site}\n\n\n')
 
     logging.info('Завершение парсинга')
@@ -124,12 +124,12 @@ def all_events(update: Update, context: CallbackContext):
 
     update_subscription_add_user(update, context, False, False)
 
-    data = process_information_parsing()
+    data_from_the_website = process_information_parsing()
     send_message(chat_id,
                  context,
-                 data)
+                 data_from_the_website)
     logging.info(f'Завершение функции all_events для { chat_id }')
-    return data
+    return data_from_the_website
 
 
 def checking_data_changes() -> bool:
@@ -175,6 +175,7 @@ def hi_say_first_message(update: Update, context: CallbackContext):
             "<u>Отписаться</u> - отписаться от уведомлений."
             )
     logging.info(f"Первое сообщение отправлено в чат {chat_id}")
+    update_subscription_add_user(update, context, False, False)
     return send_message(chat_id,
                         context,
                         text=text,)
