@@ -1,6 +1,6 @@
 venv
 .git
-events/db.sqlite3
+events/db.sqlite3.bak
 .idea
 .vscode
 .env
